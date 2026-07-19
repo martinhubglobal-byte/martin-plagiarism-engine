@@ -1,21 +1,41 @@
-# noplag-engine
+<p align="center">
+  <img src="docs/assets/banner.png" alt="Noplag Engine" width="100%">
+</p>
 
-The open-source plagiarism detection engine behind [Noplag](https://noplag.app).
+<h1 align="center">Noplag Engine</h1>
 
-It detects **verbatim and near-verbatim** text reuse against a corpus you
-control: documents are split into sentence-window chunks, each chunk is
-reduced to [winnowing fingerprints](https://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf)
-(a GIN-indexed `bigint[]` in Postgres), candidate sources are retrieved by
-fingerprint overlap, and matches are refined to exact character ranges with a
-seed-and-extend aligner. The result is a report with per-source similarity,
-per-passage character offsets on both sides, and honest coverage accounting.
+<p align="center">
+  <strong>The open-source plagiarism detection engine.</strong><br>
+  Read the code, fork it, run it on your own hardware.
+</p>
 
-What it does **not** do (yet): paraphrase detection, semantic/cross-language
-matching, and AI-writing detection are on the [public roadmap](https://noplag.app/roadmap)
-— they are not in this codebase. The hosted product additionally searches the
-live web; the open-source engine matches against your local corpus only.
+<p align="center">
+  <img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License">
+  <img src="https://img.shields.io/badge/python-3.12+-brightgreen.svg" alt="Python">
+  <img src="https://img.shields.io/badge/self--hostable-yes-success.svg" alt="Self-hostable">
+</p>
 
-## Quickstart
+---
+
+Twelve years of plagiarism detection, rebuilt in the open. This is the verbatim
+and near-verbatim core that powers [noplag.com](https://noplag.com) —
+winnowing-fingerprint matching over a corpus **you** control, with every match
+tracing back to its source.
+
+We built it on one belief: **auditable beats black-box.** Trust shouldn't
+require taking our word for it.
+
+### Three commitments
+
+- **Auditable** — Apache-2.0. Read it, fork it, self-host it. No black box.
+- **Honest** — every match shows its source, and we don't claim accuracy we
+  can't measure. This engine detects **verbatim and near-verbatim** copying;
+  paraphrase, semantic, and AI-writing detection are on the
+  [public roadmap](https://noplag.com/roadmap) — not pretended-present.
+- **Yours** — your documents are never used for training. Runs entirely on your
+  own infrastructure.
+
+### Try it in two minutes
 
 ```sh
 git clone https://github.com/NoplagLabs/noplag-engine
@@ -33,6 +53,18 @@ First start migrates the schema and indexes the bundled sample corpus
 
 The demo page is deliberately bare — the API is the product here. Build your
 own UI on `POST /v1/checks` → `GET /v1/checks/{id}/report`.
+
+## How it works
+
+Documents are split into sentence-window chunks, each chunk is reduced to
+[winnowing fingerprints](https://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf)
+(a GIN-indexed `bigint[]` in Postgres), candidate sources are retrieved by
+fingerprint overlap, and matches are refined to exact character ranges with a
+seed-and-extend aligner. The result is a report with per-source similarity,
+per-passage character offsets on both sides, and honest coverage accounting.
+
+The hosted product additionally searches the live web; the open-source engine
+matches against your local corpus only.
 
 ## Bring your own corpus
 
