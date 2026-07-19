@@ -8,7 +8,7 @@ users it accepts (PDF, DOCX, TXT):
   the upload path. It reads the embedded text layer only — a scanned PDF
   with no text layer extracts to nothing, which the caller surfaces as
   `NoExtractableText`. OCR (and a heavier layout-aware extractor like
-  pdfplumber for table-dense documents) is deferred for now.
+  pdfplumber for table-dense documents) is out of scope for this extractor.
 - **DOCX** via `python-docx`. Joins paragraph text with newlines.
 - **TXT** by decoding bytes as UTF-8, falling back to a lossy decode so
   a stray non-UTF-8 byte never fails the whole upload.

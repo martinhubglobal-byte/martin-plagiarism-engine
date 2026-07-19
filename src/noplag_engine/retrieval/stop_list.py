@@ -7,7 +7,7 @@ discriminative gain, so both layers of the cascade drop them:
 
 * the **query layer** (`workflows.check`) strips them from a query document's
   fingerprints before the `&&` probe;
-* the **ingest layer** (Phase 1, Action 2) will strip them before writing
+* the **ingest layer** strips them before writing
   `chunks.fingerprints`, so they never enter the index in the first place.
 
 For that to be sound the two layers MUST agree on the exact same set — a
@@ -20,7 +20,7 @@ Canonical source
 ----------------
 The stop list is the **top-N fingerprints of `fingerprint_df` by document
 frequency** (N via ``NOPLAG_STOP_LIST_N``, default 1000). `fingerprint_df`
-(migration 0019) is already the cascade's per-fingerprint DF table, rebuilt
+is already the cascade's per-fingerprint DF table, rebuilt
 after every major ingestion; deriving the stop list from it keeps one source of
 truth instead of a separately-computed `stop_fingerprints` table that can drift.
 The ``ORDER BY document_frequency DESC, fingerprint`` is fully deterministic, so
@@ -41,13 +41,14 @@ Eval override
 -------------
 ``STOP_FINGERPRINTS_FILE`` (a newline-delimited file of bigint fingerprints)
 short-circuits the DB read, so the eval harness can validate the filter against
-the prod stop list without writing a table to a scratch DB. The set still gets a
+a real stop list without writing a table to a scratch DB. The set still gets a
 content hash, so file-driven and DB-driven runs are comparable.
 
 Fallback
 --------
-When `fingerprint_df` is absent (CI, eval scratch, pre-build prod) the loader
-returns an empty stop list — the filter becomes a no-op, exactly as before the
+When `fingerprint_df` is absent (CI, eval scratch, or a corpus that hasn't
+built the table yet) the loader returns an empty stop list — the filter becomes
+a no-op, exactly as before the
 table exists.
 """
 
@@ -67,9 +68,9 @@ logger = logging.getLogger("noplag.retrieval.stop_list")
 
 # How many of the highest-DF fingerprints to stop. The rarest-K probe and the
 # non-discriminative-chunk skip in l1_winnowing already mask the high-DF tail for
-# normal single-chunk queries; N is primarily a batched-union latency lever, and
-# Phase 1 (Action 2) tunes it against the recall harness after the winnowing
-# re-fingerprint. Default kept at the prior stop_fingerprints order of magnitude.
+# normal single-chunk queries; N is primarily a batched-union latency lever,
+# tuned against the recall benchmark. Default kept at a conservative order of
+# magnitude.
 _DEFAULT_N = int(os.environ.get("NOPLAG_STOP_LIST_N", "1000"))
 
 # Eval/validation override (kept under the original name for continuity with the

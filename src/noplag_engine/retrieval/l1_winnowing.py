@@ -115,8 +115,9 @@ _BATCH_POOL_CAP = int(os.environ.get("NOPLAG_L1_POOL_CAP", "20000"))
 # practice: a real match shares the chunk's *rare* fingerprints, and a chunk with
 # none can't be discriminated from the corpus even if retrieved (its true source,
 # if any, sits below the pool cap among tens of thousands of common-phrase docs).
-# The threshold is data-driven: across the 30-chunk prod recall benchmark the
-# rarest fingerprint of a true-positive chunk topped out at DF ~17k, while the
+# The threshold is data-driven: across a 30-chunk recall benchmark on a
+# web-scale corpus the rarest fingerprint of a true-positive chunk topped out
+# at DF ~17k, while the
 # non-discriminative band that drives the worst-case scans is DF 1e5-1e6 (max
 # non-stopped DF ~1.1M). 50k leaves ~3x margin over the real-match ceiling and
 # sits below the whole wall band. Only applies when fingerprint_df is present;

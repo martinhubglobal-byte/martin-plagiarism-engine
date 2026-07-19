@@ -2,7 +2,7 @@
 
 L1 runs the `fingerprints && :query_fps` probe over only each query chunk's
 *rarest* fingerprints, so the candidate pool stays small and always contains the
-true source (migration 0019). To pick the
+true source. To pick the
 rarest, retrieval needs the document frequency of the query's fingerprints; this
 module fetches it from the `fingerprint_df` table (built by
 `scripts/compute_fingerprint_df.py`).
@@ -13,7 +13,7 @@ missing row reads as DF 0, the rarest possible.
 
 `fetch_document_frequencies` returns `None` (not an empty dict) when the table
 does not exist, so the caller can fall back to the plain union `&&` on a DB that
-hasn't built the table yet (CI, eval scratch, pre-build prod). An *empty* table
+hasn't built the table yet (CI, eval scratch, or a freshly-provisioned corpus). An *empty* table
 (present but unbuilt) is indistinguishable from "all rare", which is the safe
 default. Read per call, like the stop-fingerprint set, so a rebuilt table goes
 live with no engine restart.

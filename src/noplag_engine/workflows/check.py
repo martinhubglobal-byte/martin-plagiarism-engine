@@ -110,7 +110,7 @@ class CheckReport:
     total_chunks: int = 0
 
 
-# Chunk text lives in the chunks_text side table (Action 1): the chunks heap is
+# Chunk text lives in the chunks_text side table: the chunks heap is
 # kept narrow so the GIN -> heap candidate fetch touches fewer bytes, and text is
 # read only for the top-K survivors keyed by chunk id.
 _FETCH_CHUNK_TEXTS_SQL = sql_text(
