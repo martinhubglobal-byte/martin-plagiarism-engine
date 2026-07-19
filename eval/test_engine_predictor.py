@@ -1,9 +1,15 @@
 """Engine-backed plagdet on a synthetic PAN-style set.
 
-Proves the real retrieval pipeline detects plagiarism — including
+Proves the real retrieval pipeline detects plagiarism — including light
 in-place obfuscation — end to end, with a reproducible plagdet score.
 The full PAN-PC-11 run (`run_eval.py`) needs the fetched corpus; this is
 the offline, deterministic floor that runs without it.
+
+Scope caveat: this set is verbatim / lightly-obfuscated by construction,
+which is exactly what an L0/L1 engine detects. The score here says
+nothing about performance on the full PAN-PC-11, whose heavy-paraphrase
+cases score near zero by design — see eval/datasets/pan_pc_11/README.md,
+"Interpreting the score".
 
 Skips when Postgres isn't reachable, mirroring the engine suite, so it
 never blocks a no-DB environment.

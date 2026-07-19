@@ -22,6 +22,23 @@ python eval/run_eval.py --part subset
 
 Without the corpus or a reachable Postgres, `run_eval.py` prints a `[NO CORPUS]` placeholder and exits 0.
 
+## Interpreting the score
+
+PAN-PC-11 is deliberately dominated by hard obfuscation — heavy random
+paraphrase, machine translation, and summarization (see the `obfuscation`
+attribute below). This engine detects verbatim and near-verbatim reuse only,
+so expect a split result:
+
+- high plagdet with precision ≥ 0.95 on `obfuscation="none"` cases and on
+  the synthetic verbatim set in `eval/test_engine_predictor.py` (~0.8+);
+- **near-zero recall — and therefore near-zero overall plagdet — on the
+  full corpus**, because fingerprints cannot match text that has been
+  rewritten. That is the expected, by-design result for an L0/L1 engine,
+  not a bug; paraphrase and semantic layers are what would move it.
+
+When reporting numbers from this harness, always state which partition and
+obfuscation mix they were computed over.
+
 ## Layout
 
 ```

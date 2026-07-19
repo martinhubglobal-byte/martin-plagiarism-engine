@@ -82,9 +82,21 @@ pytest -q
 
 ## Benchmarks
 
-The engine is evaluated on the [PAN-PC-11](https://zenodo.org/records/3250095)
-plagiarism detection corpus with the standard plagdet metric; the harness
-lives in [eval/](eval/). See [eval/datasets/pan_pc_11/README.md](eval/datasets/pan_pc_11/README.md)
+The engine is evaluated with the standard plagdet metric on
+[PAN-PC-11](https://zenodo.org/records/3250095); the harness lives in
+[eval/](eval/). Read the numbers with the engine's scope in mind:
+
+- On **verbatim and lightly-obfuscated** material (the harness's synthetic
+  PAN-style set, and the verbatim portion of PAN-PC-11), plagdet lands
+  around **0.8+** with precision ≥ 0.95.
+- On the **full PAN-PC-11**, which is dominated by heavy paraphrase,
+  summarization, and cross-language obfuscation, an L0/L1 engine scores
+  **near zero by design** — fingerprints only match text that is actually
+  reused near-verbatim. That gap is exactly what the roadmap's paraphrase
+  (L2) and semantic (L3) layers exist to close; do not read any single
+  plagdet figure here as general-purpose detection accuracy.
+
+See [eval/datasets/pan_pc_11/README.md](eval/datasets/pan_pc_11/README.md)
 for how to fetch the corpus and reproduce the numbers.
 
 ## Layout
