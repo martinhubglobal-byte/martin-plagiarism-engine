@@ -1,0 +1,103 @@
+# noplag-engine
+
+The open-source plagiarism detection engine behind [Noplag](https://noplag.app).
+
+It detects **verbatim and near-verbatim** text reuse against a corpus you
+control: documents are split into sentence-window chunks, each chunk is
+reduced to [winnowing fingerprints](https://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf)
+(a GIN-indexed `bigint[]` in Postgres), candidate sources are retrieved by
+fingerprint overlap, and matches are refined to exact character ranges with a
+seed-and-extend aligner. The result is a report with per-source similarity,
+per-passage character offsets on both sides, and honest coverage accounting.
+
+What it does **not** do (yet): paraphrase detection, semantic/cross-language
+matching, and AI-writing detection are on the [public roadmap](https://noplag.app/roadmap)
+— they are not in this codebase. The hosted product additionally searches the
+live web; the open-source engine matches against your local corpus only.
+
+## Quickstart
+
+```sh
+git clone https://github.com/NoplagLabs/noplag-engine
+cd noplag-engine
+docker compose up
+```
+
+First start migrates the schema and indexes the bundled sample corpus
+(~1,000 Wikipedia articles, a couple of minutes). Then:
+
+- **http://localhost:8000** — demo page. Paste a paragraph from a well-known
+  Wikipedia article (say, the lead of *Albert Einstein*) and run a check: you
+  get a similarity score, highlighted passages, and the matched articles.
+- **http://localhost:8000/docs** — interactive OpenAPI docs for the `/v1` API.
+
+The demo page is deliberately bare — the API is the product here. Build your
+own UI on `POST /v1/checks` → `GET /v1/checks/{id}/report`.
+
+## Bring your own corpus
+
+The engine matches against what you index. Three ways to feed it:
+
+```sh
+# a folder of .txt / .md / .pdf / .docx
+DATABASE_URL=... python scripts/ingest_folder.py /path/to/documents
+
+# one file over HTTP
+curl -F "file=@paper.pdf" http://localhost:8000/v1/corpus/documents
+```
+
+or call `ingest_platform_document` / `fingerprint_document` from
+`noplag_engine.workflows.corpus` in your own pipeline. See
+[docs/self-hosting.md](docs/self-hosting.md) for corpus design, scaling notes,
+and the tuning knobs that matter past ~10M chunks.
+
+## API in 30 seconds
+
+```sh
+# submit
+curl -s -X POST http://localhost:8000/v1/checks \
+  -H 'Content-Type: application/json' \
+  -d '{"query_text": "Text to check, at least a few sentences long..."}'
+# -> {"check_id": "...", "status_url": ..., "report_url": ...}
+
+# poll status, then fetch the report
+curl -s http://localhost:8000/v1/checks/<id>
+curl -s http://localhost:8000/v1/checks/<id>/report
+```
+
+The full surface (uploads, SSE progress, corpus management) is documented in
+[docs/api.md](docs/api.md) and served live at `/docs`.
+
+Note: the API ships with **no authentication** — it is a single-tenant
+backend service. Run it on a trusted network or put your own auth in front.
+
+## Development
+
+```sh
+pip install -e ".[dev]"
+docker compose up postgres -d   # tests skip DB-bound suites without it
+ruff check .
+pytest -q
+```
+
+## Benchmarks
+
+The engine is evaluated on the [PAN-PC-11](https://zenodo.org/records/3250095)
+plagiarism detection corpus with the standard plagdet metric; the harness
+lives in [eval/](eval/). See [eval/datasets/pan_pc_11/README.md](eval/datasets/pan_pc_11/README.md)
+for how to fetch the corpus and reproduce the numbers.
+
+## Layout
+
+- `src/noplag_engine/` — package source: `chunking`, `fingerprinting`,
+  `retrieval`, `alignment`, `workflows` (the check pipeline), `api`
+- `migrations/` — Alembic schema
+- `scripts/` — corpus ingestion + maintenance CLIs
+- `eval/` — PAN-PC-11 benchmark harness
+- `data/` — bundled sample corpus (CC BY-SA, see
+  [data/SAMPLE_CORPUS_LICENSE.md](data/SAMPLE_CORPUS_LICENSE.md))
+
+## License
+
+[Apache-2.0](LICENSE). The sample corpus texts are from English Wikipedia and
+remain CC BY-SA 4.0.

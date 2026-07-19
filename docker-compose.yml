@@ -1,0 +1,44 @@
+# One-command demo stack: Postgres + the engine (API + demo page).
+#
+#   docker compose up
+#
+# First run migrates the schema and loads the bundled Wikipedia sample
+# corpus (a couple of minutes), then serves:
+#
+#   http://localhost:8000        demo page (paste text, see matches)
+#   http://localhost:8000/docs   interactive API docs
+#
+# Tear down with `docker compose down` (add -v to wipe the data volume).
+# Override credentials via a .env file next to this compose file.
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-noplag}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-noplag}
+      POSTGRES_DB: ${POSTGRES_DB:-noplag}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-noplag}", "-d", "${POSTGRES_DB:-noplag}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  engine:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-noplag}:${POSTGRES_PASSWORD:-noplag}@postgres:5432/${POSTGRES_DB:-noplag}
+      CORPUS_STORAGE_DIR: /var/lib/noplag/corpus
+    ports:
+      - "${ENGINE_PORT:-8000}:8000"
+    volumes:
+      - corpus_uploads:/var/lib/noplag/corpus
+
+volumes:
+  postgres_data:
+  corpus_uploads:
