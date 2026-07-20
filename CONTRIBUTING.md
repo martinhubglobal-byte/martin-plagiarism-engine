@@ -15,7 +15,10 @@ issue to discuss before investing in a large feature in those directions.
 
 ## Setup
 
+Requires **Python 3.12 or newer**.
+
 ```sh
+python3.12 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 docker compose up postgres -d
 ruff check .

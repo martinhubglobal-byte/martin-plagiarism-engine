@@ -105,7 +105,12 @@ backend service. Run it on a trusted network or put your own auth in front.
 
 ## Development
 
+Requires **Python 3.12 or newer**. On a system whose default `python3` is
+older, create the virtualenv with an explicit interpreter — `pip install`
+otherwise fails with an unhelpful version error.
+
 ```sh
+python3.12 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 docker compose up postgres -d   # tests skip DB-bound suites without it
 ruff check .
