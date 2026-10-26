@@ -1,11 +1,11 @@
 """FastAPI app factory for the engine."""
 
 from __future__ import annotations
-
+import os
+import secrets
 from pathlib import Path
-
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from noplag_engine.api.v1 import checks, corpus
@@ -15,6 +15,28 @@ _DEMO_DIR = Path(__file__).resolve().parent.parent / "demo"
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Noplag Engine", version="0.1.0")
+        @app.middleware("http")
+    async def require_api_key(request: Request, call_next):
+        if request.url.path == "/health":
+            return await call_next(request)
+
+        configured_key = os.environ.get("NOPLAG_API_KEY")
+
+        if not configured_key:
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "API authentication is not configured"},
+            )
+
+        supplied_key = request.headers.get("X-API-Key", "")
+
+        if not secrets.compare_digest(supplied_key, configured_key):
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Invalid or missing API key"},
+            )
+
+        return await call_next(request)
 
     @app.get("/health")
     def health() -> dict[str, str]:
