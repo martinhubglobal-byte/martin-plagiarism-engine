@@ -15,7 +15,8 @@ _DEMO_DIR = Path(__file__).resolve().parent.parent / "demo"
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Noplag Engine", version="0.1.0")
-        @app.middleware("http")
+
+    @app.middleware("http")
     async def require_api_key(request: Request, call_next):
         if request.url.path == "/health":
             return await call_next(request)
