@@ -9,6 +9,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from noplag_engine.api.v1 import checks, corpus
+from sqlalchemy import text
+from noplag_engine.db import get_sessionmaker
 
 _DEMO_DIR = Path(__file__).resolve().parent.parent / "demo"
 
@@ -44,6 +46,29 @@ def create_app() -> FastAPI:
         """Liveness probe — no DB call. Used by uptime monitors and compose
         healthchecks."""
         return {"status": "ok"}
+        @app.get("/__diag/database", include_in_schema=False)
+async def database_diagnostic():
+    """Temporary protected database migration diagnostic."""
+    async with get_sessionmaker()() as session:
+        result = await session.execute(
+            text("""
+                SELECT
+                    to_regclass('public.firebase_user_tenants')
+                        IS NOT NULL AS tenant_table_exists,
+                    (
+                        SELECT version_num
+                        FROM alembic_version
+                        LIMIT 1
+                    ) AS alembic_revision
+            """)
+        )
+        row = result.mappings().one()
+
+    return {
+        "database_connected": True,
+        "firebase_user_tenants_exists": row["tenant_table_exists"],
+        "alembic_revision": row["alembic_revision"],
+    }
 
     app.include_router(checks.router, prefix="/v1/checks", tags=["checks"])
     app.include_router(corpus.router, prefix="/v1/corpus", tags=["corpus"])
