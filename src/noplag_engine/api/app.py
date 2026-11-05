@@ -46,7 +46,7 @@ def create_app() -> FastAPI:
         """Liveness probe — no DB call. Used by uptime monitors and compose
         healthchecks."""
         return {"status": "ok"}
-        @app.get("/__diag/database", include_in_schema=False)
+    @app.get("/__diag/database", include_in_schema=False)
 async def database_diagnostic():
     """Temporary protected database migration diagnostic."""
     async with get_sessionmaker()() as session:
@@ -55,19 +55,24 @@ async def database_diagnostic():
                 SELECT
                     to_regclass('public.firebase_user_tenants')
                         IS NOT NULL AS tenant_table_exists,
-                    (
-                        SELECT version_num
-                        FROM alembic_version
-                        LIMIT 1
-                    ) AS alembic_revision
+                    to_regclass('public.alembic_version')
+                        IS NOT NULL AS alembic_table_exists
             """)
         )
         row = result.mappings().one()
 
+        revision = None
+        if row["alembic_table_exists"]:
+            revision_result = await session.execute(
+                text("SELECT version_num FROM alembic_version LIMIT 1")
+            )
+            revision = revision_result.scalar_one_or_none()
+
     return {
         "database_connected": True,
         "firebase_user_tenants_exists": row["tenant_table_exists"],
-        "alembic_revision": row["alembic_revision"],
+        "alembic_version_table_exists": row["alembic_table_exists"],
+        "alembic_revision": revision,
     }
 
     app.include_router(checks.router, prefix="/v1/checks", tags=["checks"])
